@@ -1,0 +1,6 @@
+spring.datasource.url=jdbc:mysql://localhost:3306/smart_budget_db
+spring.datasource.username=root
+spring.datasource.password=Rajapraba24.tech
+spring.jpa.hibernate.ddl-auto=update
+spring.jpa.show-sql=true
+server.port=8085

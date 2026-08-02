@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - Smart BudgetWise Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{background:#f0f2f5;font-family:'Segoe UI',sans-serif}
+
+        /* ── Navbar ── */
+        .navbar{background:linear-gradient(135deg,#667eea,#764ba2);padding:14px 30px;position:sticky;top:0;z-index:100;box-shadow:0 4px 20px rgba(102,126,234,0.4)}
+        .navbar-brand{color:white!important;font-weight:800;font-size:20px}
+        .nav-link{color:rgba(255,255,255,0.85)!important;font-weight:500}
+        .nav-link:hover{color:white!important}
+
+        /* ── Greeting Banner ── */
+        .greeting-banner{background:linear-gradient(135deg,#667eea 0%,#764ba2 50%,#f5576c 100%);padding:25px 35px;color:white;position:relative;overflow:hidden}
+        .greeting-banner::before{content:'';position:absolute;top:-50%;right:-10%;width:400px;height:400px;background:rgba(255,255,255,0.05);border-radius:50%}
+        .greeting-banner h2{font-size:24px;font-weight:800}
+        .motivation-quote{background:rgba(255,255,255,0.15);border-left:4px solid rgba(255,255,255,0.6);padding:10px 15px;border-radius:8px;font-style:italic;font-size:14px;margin-top:12px;max-width:600px}
+        .month-selector{background:rgba(255,255,255,0.2);border:2px solid rgba(255,255,255,0.4);border-radius:12px;color:white;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer}
+        .month-selector option{color:#333;background:white}
+
+        /* ── Summary Cards ── */
+        .summary-card{border:none;border-radius:18px;padding:22px 25px;color:white;box-shadow:0 8px 25px rgba(0,0,0,0.15);transition:transform 0.3s;cursor:pointer;position:relative;overflow:hidden}
+        .summary-card:hover{transform:translateY(-5px)}
+        .summary-card::after{content:'';position:absolute;bottom:-20px;right:-20px;width:80px;height:80px;background:rgba(255,255,255,0.1);border-radius:50%}
+        .c-income {background:linear-gradient(135deg,#11998e,#38ef7d)}
+        .c-expense{background:linear-gradient(135deg,#f5576c,#f093fb)}
+        .c-savings{background:linear-gradient(135deg,#4facfe,#00f2fe)}
+        .c-buffer {background:linear-gradient(135deg,#f7971e,#ffd200)}
+        .summary-card .label{font-size:11px;font-weight:600;opacity:0.85;letter-spacing:1px}
+        .summary-card .amount{font-size:26px;font-weight:800;margin:6px 0 2px}
+        .summary-card .sub{font-size:12px;opacity:0.8}
+        .summary-card .icon{font-size:36px;opacity:0.2;position:absolute;right:20px;top:20px}
+
+        /* ── Section Cards ── */
+        .s-card{border:none;border-radius:18px;box-shadow:0 4px 20px rgba(0,0,0,0.07);background:white;margin-bottom:24px;overflow:hidden}
+        .s-card-header{padding:18px 25px;font-weight:700;font-size:15px;border-bottom:2px solid #f0f2f5;display:flex;align-items:center;justify-content:space-between}
+
+        /* ── Budget Progress ── */
+        .budget-row{padding:14px 0;border-bottom:1px solid #f8f9fa}
+        .budget-row:last-child{border-bottom:none}
+        .progress-bar-wrap{height:10px;background:#f0f2f5;border-radius:5px;overflow:hidden;margin-top:6px}
+        .progress-bar-fill{height:100%;border-radius:5px;transition:width 1s ease}
+
+        /* ── Forms ── */
+        .form-control,.form-select{border-radius:10px;border:2px solid #e9ecef;padding:10px 14px;font-size:14px}
+        .form-control:focus,.form-select:focus{border-color:#667eea;box-shadow:0 0 0 3px rgba(102,126,234,0.15)}
+        .btn-grad{background:linear-gradient(135deg,#667eea,#764ba2);border:none;border-radius:10px;color:white;padding:11px 20px;font-weight:600;width:100%;transition:opacity 0.2s;cursor:pointer}
+        .btn-grad:hover{opacity:0.88;color:white}
+
+        /* ── Expense Items ── */
+        .exp-item{padding:13px 0;border-bottom:1px solid #f8f9fa;display:flex;align-items:center;gap:12px}
+        .exp-item:last-child{border-bottom:none}
+        .exp-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+
+        /* ── Income Items ── */
+        .income-item{padding:10px 0;border-bottom:1px solid #f8f9fa;display:flex;justify-content:space-between;align-items:center}
+        .income-item:last-child{border-bottom:none}
+
+        /* ── Recommendation Cards ── */
+        .rec-card{border-radius:12px;padding:14px 16px;margin-bottom:10px;border-left:4px solid;font-size:13px}
+        .rec-danger {background:#fff5f5;border-color:#f5576c}
+        .rec-warning{background:#fffbf0;border-color:#ffd200}
+        .rec-success{background:#f0fdf4;border-color:#38ef7d}
+        .rec-info   {background:#f0f8ff;border-color:#4facfe}
+
+        /* ── Health Score ── */
+        .health-circle{width:110px;height:110px;border-radius:50%;display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;margin:0 auto 15px;border:6px solid}
+        .health-score-num{font-size:30px;line-height:1}
+        .health-score-label{font-size:11px;opacity:0.7}
+
+        /* ── Goals Mini ── */
+        .goal-mini{padding:10px 0;border-bottom:1px solid #f8f9fa}
+        .goal-mini:last-child{border-bottom:none}
+        .goal-progress{height:8px;background:#f0f2f5;border-radius:4px;margin-top:6px;overflow:hidden}
+        .goal-fill{height:100%;border-radius:4px;transition:width 1s}
+
+        /* ── New Month Banner ── */
+        .new-month-banner{background:linear-gradient(135deg,#11998e,#38ef7d);color:white;border-radius:15px;padding:20px 25px;margin-bottom:24px;display:none}
+
+        /* ── Animations ── */
+        .animate-in{animation:fadeUp 0.5s ease forwards}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════
+     NAVBAR
+═══════════════════════════════════════ -->
+<nav class="navbar navbar-expand-lg">
+    <span class="navbar-brand"><i class="fas fa-wallet me-2"></i>Smart BudgetWise Tracker</span>
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home me-1"></i>Dashboard</a>
+        <a href="expenses.html"  class="nav-link"><i class="fas fa-list me-1"></i>Expenses</a>
+        <a href="reports.html"   class="nav-link"><i class="fas fa-chart-bar me-1"></i>Reports</a>
+        <a href="history.html"   class="nav-link"><i class="fas fa-history me-1"></i>History</a>
+        <a href="budget.html"    class="nav-link"><i class="fas fa-sliders-h me-1"></i>Budget</a>
+        <a href="goals.html"     class="nav-link"><i class="fas fa-bullseye me-1"></i>Goals</a>
+        <a href="bills.html"     class="nav-link"><i class="fas fa-bell me-1"></i>Bills</a>
+        <a href="login.html"     class="nav-link" onclick="localStorage.clear()"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+    </div>
+</nav>
+
+<!-- ═══════════════════════════════════════
+     GREETING BANNER + MONTH SELECTOR
+═══════════════════════════════════════ -->
+<div class="greeting-banner">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-start flex-wrap gap-3">
+            <div>
+                <h2 id="greetingText">Good Morning! 👋</h2>
+                <p id="greetingDate" style="opacity:0.85;font-size:14px;margin:4px 0 0"></p>
+                <div class="motivation-quote" id="motivationQuote"></div>
+            </div>
+            <div class="text-end">
+                <div style="font-size:12px;opacity:0.8;margin-bottom:6px">Viewing Month</div>
+                <select class="month-selector" id="monthSelector" onchange="onMonthChange()"></select>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="container-fluid p-4">
+
+    <!-- ═══════════════════════════════════
+         NEW MONTH BANNER
+    ═══════════════════════════════════ -->
+    <div class="new-month-banner" id="newMonthBanner">
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+            <div>
+                <div style="font-size:18px;font-weight:800">🎉 New Month Started!</div>
+                <div style="font-size:14px;opacity:0.9;margin-top:4px">Add this month's income to get started</div>
+            </div>
+            <button class="btn btn-light fw-bold" style="border-radius:10px"
+                onclick="document.getElementById('incomeSection').scrollIntoView({behavior:'smooth'})">
+                Add Income →
+            </button>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         SUMMARY CARDS
+    ═══════════════════════════════════ -->
+    <div class="row g-3 mb-4">
+        <div class="col-6 col-md-3 animate-in">
+            <div class="summary-card c-income">
+                <i class="fas fa-rupee-sign icon"></i>
+                <div class="label">TOTAL INCOME</div>
+                <div class="amount">₹<span id="cardIncome">0</span></div>
+                <div class="sub" id="incomeSub">This month</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 animate-in" style="animation-delay:0.1s">
+            <div class="summary-card c-expense">
+                <i class="fas fa-shopping-cart icon"></i>
+                <div class="label">TOTAL SPENT</div>
+                <div class="amount">₹<span id="cardSpent">0</span></div>
+                <div class="sub" id="spentSub">0% of income</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 animate-in" style="animation-delay:0.2s">
+            <div class="summary-card c-savings">
+                <i class="fas fa-piggy-bank icon"></i>
+                <div class="label">SAVED</div>
+                <div class="amount">₹<span id="cardSavings">0</span></div>
+                <div class="sub" id="savingsSub">Keep it up!</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3 animate-in" style="animation-delay:0.3s">
+            <div class="summary-card c-buffer">
+                <i class="fas fa-shield-alt icon"></i>
+                <div class="label">BALANCE LEFT</div>
+                <div class="amount">₹<span id="cardBalance">0</span></div>
+                <div class="sub" id="balanceSub">Available</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════════════════════════
+         MAIN CONTENT ROW
+    ═══════════════════════════════════ -->
+    <div class="row g-4">
+
+        <!-- LEFT COLUMN (col-lg-8) -->
+        <div class="col-lg-8">
+
+            <!-- Budget Progress -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <span><i class="fas fa-tasks me-2 text-primary"></i>Budget Progress</span>
+                    <a href="budget.html" class="btn btn-sm btn-outline-primary" style="border-radius:8px;font-size:12px">
+                        Edit %
+                    </a>
+                </div>
+                <div class="p-4" id="budgetProgress">
+                    <p class="text-muted text-center">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Recent Expenses -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <span><i class="fas fa-history me-2 text-warning"></i>Recent Expenses</span>
+                    <div class="d-flex align-items-center gap-2">
+                        <span id="expCount" class="badge bg-secondary">0</span>
+                        <a href="expenses.html" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;font-size:12px">
+                            View All
+                        </a>
+                    </div>
+                </div>
+                <div class="p-4" id="recentList">
+                    <p class="text-muted text-center">No expenses yet!</p>
+                </div>
+            </div>
+			
+			<!-- Goals (moved to left column for balance) -->
+			            <div class="s-card">
+			                <div class="s-card-header">
+			                    <span><i class="fas fa-bullseye me-2 text-info"></i>Goals Progress</span>
+			                    <a href="goals.html" class="btn btn-sm btn-outline-info" style="border-radius:8px;font-size:12px">
+			                        View All
+			                    </a>
+			                </div>
+			                <div class="p-4" id="goalsMiniLeft">
+			                    <p class="text-muted text-center" style="font-size:13px">No goals yet!</p>
+			                </div>
+			            </div>
+
+        </div>
+
+        <!-- RIGHT COLUMN (col-lg-4) -->
+        <div class="col-lg-4">
+
+            <!-- Income This Month -->
+            <div class="s-card mb-4" id="incomeSection">
+                <div class="s-card-header">
+                    <span><i class="fas fa-rupee-sign me-2 text-success"></i>Income This Month</span>
+                    <button class="btn btn-sm btn-outline-success" style="border-radius:8px;font-size:12px"
+                        onclick="toggleIncomeForm()">+ Add</button>
+                </div>
+                <div class="p-4">
+                    <!-- Income Add Form (hidden by default) -->
+                    <div id="incomeForm" style="display:none" class="mb-3">
+                        <div id="incomeAlert" class="alert d-none mb-2"></div>
+                        <div class="mb-2">
+                            <input type="text" id="incSource" class="form-control"
+                                placeholder="Source (e.g. Salary, Freelance)">
+                        </div>
+                        <div class="mb-2">
+                            <input type="number" id="incAmount" class="form-control" placeholder="Amount ₹">
+                        </div>
+                        <button class="btn-grad" onclick="addIncome()">
+                            <i class="fas fa-plus me-2"></i>Add Income
+                        </button>
+                    </div>
+                    <!-- Income List -->
+                    <div id="incomeList">
+                        <p class="text-muted text-center" style="font-size:13px">No income added yet</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Add Expense -->
+            <div class="s-card mb-4">
+                <div class="s-card-header">
+                    <span><i class="fas fa-plus-circle me-2 text-success"></i>Quick Add Expense</span>
+                </div>
+                <div class="p-4">
+                    <div id="addAlert" class="alert d-none mb-3"></div>
+                    <div class="mb-3">
+                        <input type="text" id="expDesc" class="form-control" placeholder="Description (e.g. Rent)">
+                    </div>
+                    <div class="mb-3">
+                        <input type="number" id="expAmount" class="form-control" placeholder="Amount ₹">
+                    </div>
+                    <div class="mb-3">
+                        <select id="expCat" class="form-select">
+                            <option value="MONTHLY">🏠 Monthly Expenses</option>
+                            <option value="WEEKLY">🛒 Weekly Expenses</option>
+                            <option value="WANTS">❤️ Wants & Lifestyle</option>
+                            <option value="SAVINGS">💰 Savings & Investment</option>
+                            <option value="BUFFER">🛡️ Buffer</option>
+                        </select>
+                    </div>
+                    <button class="btn-grad" onclick="addExpense()">
+                        <i class="fas fa-plus me-2"></i>Add Expense
+                    </button>
+                </div>
+            </div>
+
+            <!-- Financial Health Score -->
+            <div class="s-card mb-4">
+                <div class="s-card-header">
+                    <span><i class="fas fa-heartbeat me-2 text-danger"></i>Financial Health</span>
+                </div>
+                <div class="p-4 text-center">
+                    <div class="health-circle" id="healthCircle">
+                        <div class="health-score-num" id="healthScore">--</div>
+                        <div class="health-score-label">SCORE</div>
+                    </div>
+                    <div class="fw-bold" id="healthLabel">Calculating...</div>
+                    <div class="text-muted mt-1" style="font-size:13px" id="healthMsg"></div>
+                </div>
+            </div>
+
+            <!-- Smart Recommendations -->
+            <div class="s-card mb-4">
+                <div class="s-card-header">
+                    <span><i class="fas fa-lightbulb me-2 text-warning"></i>Smart Tips</span>
+                </div>
+                <div class="p-4" id="recommendations">
+                    <p class="text-muted text-center" style="font-size:13px">Add expenses to get tips!</p>
+                </div>
+            </div>
+
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+// ═══════════════════════════════════════
+//  AUTH CHECK
+// ═══════════════════════════════════════
+const userId   = localStorage.getItem('userId');
+const userName = localStorage.getItem('userName');
+if (!userId) window.location.href = 'login.html';
+
+// ═══════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════
+const monthNames = ['','January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+
+const quotes = [
+    "A budget is telling your money where to go instead of wondering where it went.",
+    "Do not save what is left after spending; spend what is left after saving.",
+    "Every rupee saved today is two rupees tomorrow.",
+    "Track every rupee — it adds up faster than you think!",
+    "Budget now. Travel later. Retire early.",
+    "Small daily savings add up to big future wealth.",
+    "Financial freedom begins with a simple budget.",
+    "The secret to getting ahead is getting started."
+];
+
+const catDef = [
+    {key:'MONTHLY', label:'Monthly Expenses',     icon:'🏠', color:'#f5576c'},
+    {key:'WEEKLY',  label:'Weekly Expenses',       icon:'🛒', color:'#ffd200'},
+    {key:'WANTS',   label:'Wants & Lifestyle',     icon:'❤️', color:'#4facfe'},
+    {key:'SAVINGS', label:'Savings & Investment',  icon:'💰', color:'#38ef7d'},
+    {key:'BUFFER',  label:'Buffer',                icon:'🛡️', color:'#a18cd1'}
+];
+
+// ═══════════════════════════════════════
+//  GREETING
+// ═══════════════════════════════════════
+const now   = new Date();
+const hours = now.getHours();
+const greet = hours < 12 ? 'Good Morning' : hours < 17 ? 'Good Afternoon' : 'Good Evening';
+document.getElementById('greetingText').textContent =
+    `${greet}, ${userName}! 👋`;
+document.getElementById('greetingDate').textContent =
+    now.toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+document.getElementById('motivationQuote').textContent =
+    '💡 ' + quotes[Math.floor(Math.random() * quotes.length)];
+
+// ═══════════════════════════════════════
+//  SELECTED MONTH / YEAR
+// ═══════════════════════════════════════
+let selMonth = now.getMonth() + 1;
+let selYear  = now.getFullYear();
+
+// If coming from history page
+const savedMonth = localStorage.getItem('viewMonth');
+const savedYear  = localStorage.getItem('viewYear');
+if (savedMonth && savedYear) {
+    selMonth = parseInt(savedMonth);
+    selYear  = parseInt(savedYear);
+    localStorage.removeItem('viewMonth');
+    localStorage.removeItem('viewYear');
+}
+
+// Budget plan (default values)
+let budgetPlan = {
+    monthlyExpensePct: 40,
+    weeklyExpensePct:  30,
+    wantsPct:          10,
+    savingsPct:        10,
+    bufferPct:         10
+};
+
+// ═══════════════════════════════════════
+//  MONTH SELECTOR
+// ═══════════════════════════════════════
+async function loadMonthSelector() {
+    try {
+        const r = await fetch(`http://localhost:8085/api/dashboard/months/${userId}`);
+        const months = r.ok ? await r.json() : [];
+
+        const currentKey = `${selYear}-${String(selMonth).padStart(2,'0')}`;
+        const nextDate   = new Date(selYear, selMonth, 1);
+        const nextKey    = `${nextDate.getFullYear()}-${String(nextDate.getMonth()+1).padStart(2,'0')}`;
+
+        if (!months.includes(currentKey)) months.unshift(currentKey);
+        if (!months.includes(nextKey))    months.unshift(nextKey);
+
+        const unique = [...new Set(months)].sort().reverse();
+
+        document.getElementById('monthSelector').innerHTML = unique.map(m => {
+            const [y, mo] = m.split('-');
+            return `<option value="${m}" ${m === currentKey ? 'selected' : ''}>
+                        ${monthNames[parseInt(mo)]} ${y}
+                    </option>`;
+        }).join('');
+
+    } catch(e) {
+        document.getElementById('monthSelector').innerHTML =
+            `<option value="${selYear}-${String(selMonth).padStart(2,'0')}">
+                ${monthNames[selMonth]} ${selYear}
+            </option>`;
+    }
+}
+
+function onMonthChange() {
+    const val = document.getElementById('monthSelector').value;
+    if (!val) return;
+    const [y, m] = val.split('-');
+    selYear  = parseInt(y);
+    selMonth = parseInt(m);
+    loadDashboard();
+}
+
+// ═══════════════════════════════════════
+//  MAIN DASHBOARD LOAD
+// ═══════════════════════════════════════
+async function loadDashboard() {
+
+    // 1. Load budget plan
+    try {
+        const r = await fetch(`http://localhost:8085/api/budget/user/${userId}`);
+        if (r.ok) budgetPlan = await r.json();
+    } catch(e) {}
+
+    // 2. Load dashboard summary (month-wise)
+    let summary = {
+        totalIncome:  0,
+        totalSpent:   0,
+        balance:      0,
+        savings:      0,
+        incomeCount:  0,
+        categorySpent:{MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0}
+    };
+    try {
+        const r = await fetch(`http://localhost:8085/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
+        if (r.ok) summary = await r.json();
+    } catch(e) {}
+
+    const totalIncome = summary.totalIncome || 0;
+    const totalSpent  = summary.totalSpent  || 0;
+    const balance     = totalIncome - totalSpent;
+    const spent       = summary.categorySpent ||
+                        {MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0};
+    const savedAmt    = spent.SAVINGS || 0;
+
+    // 3. Allocation based on actual income this month
+    const alloc = {};
+    catDef.forEach(c => {
+        const pctKey = c.key === 'MONTHLY' ? 'monthlyExpensePct'
+                     : c.key === 'WEEKLY'  ? 'weeklyExpensePct'
+                     : c.key === 'WANTS'   ? 'wantsPct'
+                     : c.key === 'SAVINGS' ? 'savingsPct'
+                     :                       'bufferPct';
+        alloc[c.key] = totalIncome * (budgetPlan[pctKey] || 0) / 100;
+    });
+
+    // 4. New Month Banner
+    const isCurrentMonth = (selMonth === now.getMonth()+1 && selYear === now.getFullYear());
+    const banner = document.getElementById('newMonthBanner');
+    banner.style.display = (isCurrentMonth && totalIncome === 0 && summary.incomeCount === 0)
+        ? 'block' : 'none';
+
+    // 5. Summary Cards
+    document.getElementById('cardIncome').textContent  = totalIncome.toLocaleString('en-IN');
+    document.getElementById('cardSpent').textContent   = totalSpent.toLocaleString('en-IN');
+    document.getElementById('cardSavings').textContent = savedAmt.toLocaleString('en-IN');
+    document.getElementById('cardBalance').textContent = Math.max(balance, 0).toLocaleString('en-IN');
+    document.getElementById('incomeSub').textContent   = `${monthNames[selMonth]} ${selYear}`;
+    document.getElementById('spentSub').textContent    = totalIncome > 0
+        ? `${((totalSpent / totalIncome) * 100).toFixed(1)}% of income`
+        : 'Add income first';
+    document.getElementById('savingsSub').textContent  = savedAmt > 0 ? '🌟 Great saving!' : 'Start saving today!';
+    document.getElementById('balanceSub').textContent  = balance >= 0 ? '✅ On track!' : '⚠️ Over budget!';
+
+    // 6. Budget Progress Bars
+    document.getElementById('budgetProgress').innerHTML = totalIncome === 0
+        ? '<p class="text-muted text-center py-2">Add income to see budget allocation</p>'
+        : catDef.map(c => {
+            const spentAmt = spent[c.key] || 0;
+            const allocAmt = alloc[c.key] || 0;
+            const pct      = allocAmt > 0 ? Math.min((spentAmt / allocAmt) * 100, 100).toFixed(1) : 0;
+            const over     = spentAmt > allocAmt && allocAmt > 0;
+            const status   = over ? '⚠️ Over!' : pct > 80 ? '🔴 Near limit' : '✅ OK';
+            const fillColor= over ? '#f5576c' : c.color;
+            return `
+            <div class="budget-row">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">${c.icon} ${c.label}</span>
+                    <span style="font-size:13px;color:${over ? '#f5576c' : '#6c757d'}">
+                        ₹${spentAmt.toLocaleString('en-IN')} / ₹${allocAmt.toLocaleString('en-IN')}
+                        <span class="ms-1">${status}</span>
+                    </span>
+                </div>
+                <div class="progress-bar-wrap">
+                    <div class="progress-bar-fill" style="width:${pct}%;background:${fillColor}"></div>
+                </div>
+            </div>`;
+        }).join('');
+
+    // 7. Recent Expenses
+    try {
+        const r = await fetch(`http://localhost:8085/api/expenses/user/${userId}/${selYear}/${selMonth}`);
+        if (r.ok) {
+            const expenses = await r.json();
+            document.getElementById('expCount').textContent = expenses.length;
+
+            document.getElementById('recentList').innerHTML = expenses.length
+                ? [...expenses].reverse().slice(0, 6).map(e => `
+                    <div class="exp-item">
+                        <div class="exp-icon" style="background:${getColor(e.categoryType)}20;color:${getColor(e.categoryType)}">
+                            ${getIcon(e.categoryType)}
+                        </div>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold" style="font-size:14px">${e.description}</div>
+                            <div style="font-size:12px;color:#aaa">${e.categoryType} · ${e.expenseDate}</div>
+                        </div>
+                        <div class="fw-bold" style="color:#f5576c">-₹${e.amount.toLocaleString('en-IN')}</div>
+                    </div>`).join('')
+                : '<p class="text-muted text-center">No expenses this month!</p>';
+        }
+    } catch(e) {}
+
+    // 8. Financial Health Score
+    let score = 100;
+    catDef.forEach(c => {
+        if ((spent[c.key] || 0) > alloc[c.key] && alloc[c.key] > 0) score -= 15;
+    });
+    if (savedAmt > 0)  score += 5;
+    if (balance < 0)   score -= 20;
+    score = Math.max(0, Math.min(100, score));
+
+    const hColor  = score >= 75 ? '#38ef7d' : score >= 50 ? '#ffd200' : '#f5576c';
+    const hCircle = document.getElementById('healthCircle');
+    hCircle.style.borderColor = hColor;
+    hCircle.style.color       = hColor;
+    document.getElementById('healthScore').textContent = score;
+    document.getElementById('healthLabel').textContent =
+        score >= 75 ? '💚 Excellent!' : score >= 50 ? '💛 Good' : '❤️ Needs Attention';
+    document.getElementById('healthMsg').textContent =
+        score >= 75 ? 'Finances well managed!' :
+        score >= 50 ? 'A few areas need attention.' :
+                      'Overspending in some areas.';
+
+    // 9. Smart Recommendations
+    const recs = [];
+    if (totalIncome === 0) {
+        recs.push({type:'info', msg:'💡 Add your income first to see budget recommendations.'});
+    } else {
+        catDef.forEach(c => {
+            const p = alloc[c.key] > 0 ? ((spent[c.key] || 0) / alloc[c.key]) * 100 : 0;
+            if      (p > 100) recs.push({type:'danger',  msg:`⚠️ <b>${c.label}</b> over budget by ₹${((spent[c.key]||0) - alloc[c.key]).toLocaleString('en-IN')}!`});
+            else if (p > 85)  recs.push({type:'warning', msg:`🔶 <b>${c.label}</b> at ${p.toFixed(0)}% — almost at limit!`});
+        });
+        if (savedAmt === 0)
+            recs.push({type:'info',    msg:'💡 No savings yet. Even ₹500 helps — start today!'});
+        if (savedAmt >= totalIncome * 0.2)
+            recs.push({type:'success', msg:`✅ Great! You saved ${((savedAmt/totalIncome)*100).toFixed(0)}% of income!`});
+        if (balance > 0)
+            recs.push({type:'success', msg:`🎉 ₹${balance.toLocaleString('en-IN')} remaining — consider adding to savings!`});
+        if ((spent.BUFFER || 0) === 0)
+            recs.push({type:'info',    msg:'🛡️ Buffer unused — will transfer to Emergency Fund at month end!'});
+    }
+    document.getElementById('recommendations').innerHTML = recs.length
+        ? recs.map(r => `<div class="rec-card rec-${r.type}">${r.msg}</div>`).join('')
+        : '<p class="text-success text-center">✅ All good! Keep tracking.</p>';
+
+    // 10. Goals Mini
+    try {
+        const r = await fetch(`http://localhost:8085/api/goals/user/${userId}`);
+        if (r.ok) {
+            const goals  = await r.json();
+            const gColors= ['#667eea','#11998e','#f5576c','#f7971e','#4facfe'];
+            document.getElementById('goalsMiniLeft').innerHTML = goals.length
+                ? goals.slice(0, 3).map((g, i) => {
+                    const p = Math.min((g.savedAmount / g.targetAmount) * 100, 100).toFixed(0);
+                    return `
+                    <div class="goal-mini">
+                        <div class="d-flex justify-content-between">
+                            <span class="fw-semibold" style="font-size:14px">${g.goalName}</span>
+                            <span style="font-size:13px;color:${gColors[i%5]}">${p}%</span>
+                        </div>
+                        <div class="d-flex justify-content-between" style="font-size:12px;color:#aaa;margin-top:2px">
+                            <span>₹${g.savedAmount.toLocaleString('en-IN')} saved</span>
+                            <span>₹${g.targetAmount.toLocaleString('en-IN')} target</span>
+                        </div>
+                        <div class="goal-progress">
+                            <div class="goal-fill" style="width:${p}%;background:${gColors[i%5]}"></div>
+                        </div>
+                    </div>`;
+                }).join('')
+                : '<p class="text-muted text-center" style="font-size:13px">No goals! <a href="goals.html">Add one</a></p>';
+        }
+    } catch(e) {}
+
+    // 11. Income List
+    loadIncomeList();
+}
+
+// ═══════════════════════════════════════
+//  HELPER FUNCTIONS
+// ═══════════════════════════════════════
+function getColor(cat) {
+    return {MONTHLY:'#f5576c',WEEKLY:'#ffd200',WANTS:'#4facfe',SAVINGS:'#38ef7d',BUFFER:'#a18cd1'}[cat] || '#667eea';
+}
+function getIcon(cat) {
+    return {MONTHLY:'🏠',WEEKLY:'🛒',WANTS:'❤️',SAVINGS:'💰',BUFFER:'🛡️'}[cat] || '💸';
+}
+
+// ═══════════════════════════════════════
+//  INCOME FUNCTIONS
+// ═══════════════════════════════════════
+async function loadIncomeList() {
+    try {
+        const r = await fetch(`http://localhost:8085/api/income/user/${userId}/${selYear}/${selMonth}`);
+        if (!r.ok) return;
+        const incomes = await r.json();
+        document.getElementById('incomeList').innerHTML = incomes.length
+            ? incomes.map(i => `
+                <div class="income-item">
+                    <div>
+                        <div class="fw-semibold" style="font-size:14px">${i.source}</div>
+                        <div style="font-size:12px;color:#aaa">${monthNames[i.month]} ${i.year}</div>
+                    </div>
+                    <div class="fw-bold" style="color:#11998e">+₹${i.amount.toLocaleString('en-IN')}</div>
+                </div>`).join('')
+            : '<p class="text-muted text-center" style="font-size:13px">No income added yet</p>';
+    } catch(e) {}
+}
+
+function toggleIncomeForm() {
+    const f = document.getElementById('incomeForm');
+    f.style.display = f.style.display === 'none' ? 'block' : 'none';
+}
+
+async function addIncome() {
+    const source = document.getElementById('incSource').value.trim();
+    const amount = document.getElementById('incAmount').value.trim();
+    if (!source || !amount) { showIncAlert('Fill source and amount!', 'danger'); return; }
+    try {
+        const r = await fetch('http://localhost:8085/api/income/add', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({userId:parseInt(userId), source, amount:parseFloat(amount), month:selMonth, year:selYear})
+        });
+        if (r.ok) {
+            showIncAlert('Income added!', 'success');
+            document.getElementById('incSource').value = '';
+            document.getElementById('incAmount').value = '';
+            document.getElementById('incomeForm').style.display = 'none';
+            await loadMonthSelector();
+            loadDashboard();
+        }
+    } catch(e) { showIncAlert('Server error!', 'danger'); }
+}
+
+function showIncAlert(msg, type) {
+    const b = document.getElementById('incomeAlert');
+    b.className = `alert alert-${type} py-2`;
+    b.textContent = msg;
+    setTimeout(() => b.className = 'alert d-none', 3000);
+}
+
+// ═══════════════════════════════════════
+//  EXPENSE FUNCTIONS
+// ═══════════════════════════════════════
+async function addExpense() {
+    const desc   = document.getElementById('expDesc').value.trim();
+    const amount = document.getElementById('expAmount').value.trim();
+    const cat    = document.getElementById('expCat').value;
+    if (!desc || !amount) { showAdd('Fill all fields!', 'danger'); return; }
+    try {
+        const r = await fetch('http://localhost:8085/api/expenses/add', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({
+                userId: parseInt(userId),
+                description: desc,
+                amount: parseFloat(amount),
+                categoryType: cat,
+                expenseDate: new Date().toISOString().split('T')[0],
+                month: selMonth,
+                year:  selYear
+            })
+        });
+        if (r.ok) {
+            showAdd('✅ Added!', 'success');
+            document.getElementById('expDesc').value   = '';
+            document.getElementById('expAmount').value = '';
+            loadDashboard();
+        }
+    } catch(e) { showAdd('Server error!', 'danger'); }
+}
+
+function showAdd(msg, type) {
+    const b = document.getElementById('addAlert');
+    b.className = `alert alert-${type} py-2`;
+    b.textContent = msg;
+    setTimeout(() => b.className = 'alert d-none', 2500);
+}
+
+// ═══════════════════════════════════════
+//  INIT
+// ═══════════════════════════════════════
+async function init() {
+    await loadMonthSelector();
+    await loadDashboard();
+}
+init();
+</script>
+<!-- ═══════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════ -->
+<footer style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;margin-top:40px;padding:30px 0 20px">
+    <div class="container-fluid px-4">
+        <div class="row g-4 mb-3">
+
+            <!-- Brand -->
+            <div class="col-md-4">
+                <div style="font-size:20px;font-weight:800;margin-bottom:8px">
+                    <i class="fas fa-wallet me-2"></i>Smart BudgetWise Tracker
+                </div>
+                <p style="opacity:0.8;font-size:13px;line-height:1.6">
+                    Plan your money. Avoid debt. Achieve your goals.<br>
+                    A complete personal finance management system.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-md-4">
+                <div style="font-weight:700;margin-bottom:12px;font-size:14px">Quick Links</div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="dashboard.html" style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Dashboard</a>
+                    <a href="expenses.html"  style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Expenses</a>
+                    <a href="reports.html"   style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Reports</a>
+                    <a href="history.html"   style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">History</a>
+                    <a href="budget.html"    style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Budget</a>
+                    <a href="goals.html"     style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Goals</a>
+                    <a href="bills.html"     style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Bills</a>
+                </div>
+            </div>
+
+            <!-- Budget Rules -->
+            <div class="col-md-4">
+                <div style="font-weight:700;margin-bottom:12px;font-size:14px">Smart Budget Rule</div>
+                <div style="font-size:13px;opacity:0.85;line-height:2">
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">🏠 Monthly 40%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">🛒 Weekly 30%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">❤️ Wants 10%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">💰 Savings 10%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px">🛡️ Buffer 10%</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Divider -->
+        <div style="border-top:1px solid rgba(255,255,255,0.2);margin:15px 0"></div>
+
+        <!-- Copyright Row -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div style="font-size:13px;opacity:0.8">
+                © <span id="footerYear"></span> Smart BudgetWise Tracker. All rights reserved.
+            </div>
+            <div style="font-size:13px;opacity:0.8">
+                Developed by <strong>Rajapraba T</strong> · B.Tech IT · AAMEC
+            </div>
+            <div style="font-size:12px;opacity:0.7">
+                Built with Java Spring Boot · MySQL · Bootstrap
+            </div>
+        </div>
+
+    </div>
+</footer>
+
+<script>
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>

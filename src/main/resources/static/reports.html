@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports - Smart BudgetWise Tracker</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+	
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        body{background:#f0f2f5;font-family:'Segoe UI',sans-serif}
+        .navbar{background:linear-gradient(135deg,#667eea,#764ba2);padding:14px 30px;position:sticky;top:0;z-index:100}
+        .navbar-brand{color:white!important;font-weight:800}
+        .nav-link{color:rgba(255,255,255,0.85)!important}
+        .nav-link:hover{color:white!important}
+        .page-header{background:linear-gradient(135deg,#667eea,#764ba2);padding:25px 35px;color:white}
+        .page-header h3{font-weight:800}
+        .s-card{border:none;border-radius:15px;box-shadow:0 4px 15px rgba(0,0,0,0.08);background:white;margin-bottom:24px}
+        .s-card-header{padding:18px 25px;font-weight:700;border-bottom:2px solid #f0f2f5;display:flex;align-items:center;justify-content:space-between}
+        .stat-box{border-radius:12px;padding:20px;text-align:center}
+        .stat-box .num{font-size:24px;font-weight:800}
+        .stat-box .lbl{font-size:12px;margin-top:4px;opacity:0.8}
+        .exp-row{padding:12px 0;border-bottom:1px solid #f8f9fa;display:flex;align-items:center;gap:12px}
+        .exp-row:last-child{border-bottom:none}
+        .cat-icon{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
+        .progress{height:10px;border-radius:5px}
+        .filter-btn{border-radius:8px;padding:6px 16px;font-size:13px;font-weight:600;border:2px solid #667eea;color:#667eea;background:white;cursor:pointer;transition:all 0.2s}
+        .filter-btn.active{background:#667eea;color:white}
+        .insight-card{border-radius:12px;padding:14px;margin-bottom:10px;border-left:4px solid;font-size:13px}
+        .insight-success{background:#f0fdf4;border-color:#38ef7d}
+        .insight-warning{background:#fffbf0;border-color:#ffd200}
+        .insight-danger{background:#fff5f5;border-color:#f5576c}
+        .insight-info{background:#f0f8ff;border-color:#4facfe}
+        .month-filter{border-radius:10px;border:2px solid rgba(255,255,255,0.5);padding:8px 14px;font-size:14px;background:rgba(255,255,255,0.2);color:white;cursor:pointer}
+        .month-filter option{color:#333;background:white}
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg">
+    <span class="navbar-brand"><i class="fas fa-wallet me-2"></i>Smart BudgetWise Tracker</span>
+    <div class="ms-auto d-flex align-items-center gap-3">
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home me-1"></i>Dashboard</a>
+        <a href="expenses.html" class="nav-link"><i class="fas fa-list me-1"></i>Expenses</a>
+        <a href="reports.html" class="nav-link"><i class="fas fa-chart-bar me-1"></i>Reports</a>
+        <a href="history.html" class="nav-link"><i class="fas fa-history me-1"></i>History</a>
+        <a href="budget.html" class="nav-link"><i class="fas fa-sliders-h me-1"></i>Budget</a>
+        <a href="goals.html" class="nav-link"><i class="fas fa-bullseye me-1"></i>Goals</a>
+        <a href="bills.html" class="nav-link"><i class="fas fa-bell me-1"></i>Bills</a>
+        <a href="login.html" class="nav-link" onclick="localStorage.clear()"><i class="fas fa-sign-out-alt me-1"></i>Logout</a>
+    </div>
+</nav>
+
+<div class="page-header">
+    <div class="container-fluid d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div>
+            <h3><i class="fas fa-chart-bar me-2"></i>Financial Reports</h3>
+            <p style="opacity:0.85;margin:0">Complete overview of your spending & savings</p>
+        </div>
+        <select id="monthFilter" class="month-filter" onchange="loadReports()"></select>
+		
+		<button onclick="exportPDF()" 
+		    style="background:white;color:#667eea;border:2px solid white;border-radius:10px;padding:8px 18px;font-weight:700;cursor:pointer;font-size:14px;transition:all 0.2s"
+		    onmouseover="this.style.background='rgba(255,255,255,0.1)';this.style.color='white'"
+		    onmouseout="this.style.background='white';this.style.color='#667eea'">
+		    <i class="fas fa-file-pdf me-2"></i>Export PDF
+		</button>
+    </div>
+</div>
+
+<div class="container-fluid p-4">
+    <div class="row g-3 mb-4" id="summaryStats"></div>
+    <div class="row g-4">
+        <div class="col-lg-8">
+
+            <!-- Filter -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <span><i class="fas fa-filter me-2"></i>Filter by Category</span>
+                </div>
+                <div class="p-3 d-flex flex-wrap gap-2">
+                    <button class="filter-btn active" onclick="filterExpenses('ALL',this)">All</button>
+                    <button class="filter-btn" onclick="filterExpenses('MONTHLY',this)">🏠 Monthly</button>
+                    <button class="filter-btn" onclick="filterExpenses('WEEKLY',this)">🛒 Weekly</button>
+                    <button class="filter-btn" onclick="filterExpenses('WANTS',this)">❤️ Wants</button>
+                    <button class="filter-btn" onclick="filterExpenses('SAVINGS',this)">💰 Savings</button>
+                    <button class="filter-btn" onclick="filterExpenses('BUFFER',this)">🛡️ Buffer</button>
+                </div>
+            </div>
+
+            <!-- Expense History -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <span><i class="fas fa-history me-2"></i>Expense History</span>
+                    <span id="expCount" class="badge bg-secondary">0</span>
+                </div>
+                <div class="p-4" id="expenseList"><p class="text-muted text-center">Loading...</p></div>
+            </div>
+
+            <!-- Category Breakdown -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <span><i class="fas fa-chart-pie me-2"></i>Category Breakdown</span>
+                </div>
+                <div class="row p-4">
+                    <div class="col-md-5">
+                        <canvas id="pieChart" height="250"></canvas>
+                    </div>
+                    <div class="col-md-7" id="categoryStats"></div>
+                </div>
+            </div>
+
+        </div>
+
+        <div class="col-lg-4">
+
+            <!-- Budget vs Spent -->
+            <div class="s-card mb-4">
+                <div class="s-card-header">
+                    <span><i class="fas fa-balance-scale me-2"></i>Budget vs Spent</span>
+                </div>
+                <div class="p-4">
+                    <canvas id="budgetChart" height="280"></canvas>
+                </div>
+            </div>
+
+            <!-- Smart Insights -->
+            <div class="s-card mb-4">
+                <div class="s-card-header">
+                    <span><i class="fas fa-lightbulb me-2"></i>Smart Insights</span>
+                </div>
+                <div class="p-4" id="insights">
+                    <p class="text-muted text-center" style="font-size:13px">Loading...</p>
+                </div>
+            </div>
+
+            <!-- Savings Summary -->
+            <div class="s-card">
+                <div class="s-card-header">
+                    <span><i class="fas fa-piggy-bank me-2"></i>Savings Summary</span>
+                </div>
+                <div class="p-4" id="savingsSummary"></div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+const userId = localStorage.getItem('userId');
+if (!userId) window.location.href = 'login.html';
+
+const monthNames = ['','January','February','March','April','May','June',
+                    'July','August','September','October','November','December'];
+const catColors = {MONTHLY:'#f5576c',WEEKLY:'#ffd200',WANTS:'#4facfe',SAVINGS:'#38ef7d',BUFFER:'#a18cd1'};
+const catIcons  = {MONTHLY:'🏠',WEEKLY:'🛒',WANTS:'❤️',SAVINGS:'💰',BUFFER:'🛡️'};
+const catNames  = {MONTHLY:'Monthly Expenses',WEEKLY:'Weekly Expenses',WANTS:'Wants & Lifestyle',SAVINGS:'Savings & Investment',BUFFER:'Buffer'};
+
+// ── Chart instances — MUST be declared here to destroy on reload ──
+let pieChartInstance  = null;
+let barChartInstance  = null;
+
+let allExpenses = [];
+let budgetPlan  = {monthlyExpensePct:40,weeklyExpensePct:30,wantsPct:10,savingsPct:10,bufferPct:10};
+let selMonth    = new Date().getMonth() + 1;
+let selYear     = new Date().getFullYear();
+
+// ── Init: load month dropdown ──────────────────────────────────
+async function init() {
+    try {
+        const r = await fetch(`http://localhost:8085/api/dashboard/months/${userId}`);
+        const months = r.ok ? await r.json() : [];
+        const now = `${selYear}-${String(selMonth).padStart(2,'0')}`;
+        if (!months.includes(now)) months.unshift(now);
+        document.getElementById('monthFilter').innerHTML = months.map(m => {
+            const [y, mo] = m.split('-');
+            return `<option value="${m}" ${m === now ? 'selected' : ''}>${monthNames[parseInt(mo)]} ${y}</option>`;
+        }).join('');
+    } catch(e) {}
+    loadReports();
+}
+
+// ── Main load ──────────────────────────────────────────────────
+async function loadReports() {
+    const val = document.getElementById('monthFilter').value;
+    if (val) {
+        const [y, m] = val.split('-');
+        selYear  = parseInt(y);
+        selMonth = parseInt(m);
+    }
+
+    // Load budget plan
+    try {
+        const r = await fetch(`http://localhost:8085/api/budget/user/${userId}`);
+        if (r.ok) budgetPlan = await r.json();
+    } catch(e) {}
+
+    // Load dashboard summary
+    let summary = {
+        totalIncome:0, totalSpent:0, savings:0, balance:0,
+        categorySpent:{MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0}
+    };
+    try {
+        const r = await fetch(`http://localhost:8085/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
+        if (r.ok) summary = await r.json();
+    } catch(e) {}
+
+    const totalIncome = summary.totalIncome || 0;
+    const spent = summary.categorySpent || {MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0};
+
+    const alloc = {
+        MONTHLY: totalIncome * budgetPlan.monthlyExpensePct / 100,
+        WEEKLY:  totalIncome * budgetPlan.weeklyExpensePct  / 100,
+        WANTS:   totalIncome * budgetPlan.wantsPct           / 100,
+        SAVINGS: totalIncome * budgetPlan.savingsPct         / 100,
+        BUFFER:  totalIncome * budgetPlan.bufferPct          / 100
+    };
+
+    const totalSaved  = spent.SAVINGS || 0;
+    const savingsPct  = totalIncome > 0 ? ((totalSaved / totalIncome) * 100).toFixed(1) : 0;
+
+    // ── Summary cards ──
+    document.getElementById('summaryStats').innerHTML = `
+        <div class="col-6 col-md-3">
+            <div class="stat-box" style="background:linear-gradient(135deg,#11998e,#38ef7d);color:white">
+                <div class="num">₹${totalIncome.toLocaleString('en-IN')}</div>
+                <div class="lbl">Income · ${monthNames[selMonth]} ${selYear}</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box" style="background:linear-gradient(135deg,#f5576c,#f093fb);color:white">
+                <div class="num">₹${(summary.totalSpent||0).toLocaleString('en-IN')}</div>
+                <div class="lbl">Total Spent</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box" style="background:linear-gradient(135deg,#4facfe,#00f2fe);color:white">
+                <div class="num">₹${totalSaved.toLocaleString('en-IN')}</div>
+                <div class="lbl">Saved (${savingsPct}%)</div>
+            </div>
+        </div>
+        <div class="col-6 col-md-3">
+            <div class="stat-box" style="background:linear-gradient(135deg,#f7971e,#ffd200);color:white">
+                <div class="num">₹${Math.max(summary.balance||0,0).toLocaleString('en-IN')}</div>
+                <div class="lbl">Balance Left</div>
+            </div>
+        </div>`;
+
+    // ── Load expenses ──
+    try {
+        const r = await fetch(`http://localhost:8085/api/expenses/user/${userId}/${selYear}/${selMonth}`);
+        if (r.ok) allExpenses = await r.json();
+        else allExpenses = [];
+    } catch(e) { allExpenses = []; }
+    renderExpenses(allExpenses);
+
+    // ── PIE CHART — destroy old, create new ──
+    if (pieChartInstance) {
+        pieChartInstance.destroy();
+        pieChartInstance = null;
+    }
+    pieChartInstance = new Chart(document.getElementById('pieChart'), {
+        type: 'doughnut',
+        data: {
+            labels: Object.keys(spent).map(k => catNames[k]),
+            datasets: [{
+                data: Object.values(spent),
+                backgroundColor: Object.keys(spent).map(k => catColors[k]),
+                borderWidth: 0
+            }]
+        },
+        options: {
+            cutout: '65%',
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // ── Category stats ──
+    document.getElementById('categoryStats').innerHTML = Object.keys(spent).map(k => {
+        const pct  = alloc[k] > 0 ? ((spent[k] / alloc[k]) * 100).toFixed(0) : 0;
+        const over = spent[k] > alloc[k];
+        return `
+        <div class="mb-3">
+            <div class="d-flex justify-content-between mb-1">
+                <span style="font-size:13px;font-weight:600">${catIcons[k]} ${catNames[k]}</span>
+                <span style="font-size:12px;color:${over?'#f5576c':'#6c757d'}">
+                    ₹${(spent[k]||0).toLocaleString('en-IN')} / ₹${alloc[k].toLocaleString('en-IN')}
+                </span>
+            </div>
+            <div class="progress">
+                <div class="progress-bar" style="width:${Math.min(pct,100)}%;background:${over?'#f5576c':catColors[k]}"></div>
+            </div>
+        </div>`;
+    }).join('');
+
+    // ── BAR CHART — destroy old, create new ──
+    if (barChartInstance) {
+        barChartInstance.destroy();
+        barChartInstance = null;
+    }
+    barChartInstance = new Chart(document.getElementById('budgetChart'), {
+        type: 'bar',
+        data: {
+            labels: ['Monthly','Weekly','Wants','Savings','Buffer'],
+            datasets: [
+                {
+                    label: 'Allocated',
+                    data: Object.values(alloc),
+                    backgroundColor: 'rgba(102,126,234,0.3)',
+                    borderRadius: 6
+                },
+                {
+                    label: 'Spent',
+                    data: Object.values(spent),
+                    backgroundColor: Object.keys(spent).map(k => catColors[k] + 'cc'),
+                    borderRadius: 6
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            plugins: { legend: { position:'bottom', labels:{ font:{ size:11 } } } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { callback: v => '₹' + v.toLocaleString('en-IN'), font:{ size:10 } }
+                }
+            }
+        }
+    });
+
+    // ── Smart Insights ──
+    const insights = [];
+    Object.keys(spent).forEach(k => {
+        const p = alloc[k] > 0 ? (spent[k] / alloc[k]) * 100 : 0;
+        if (p > 100)      insights.push({type:'danger',  msg:`⚠️ <b>${catNames[k]}</b> overspent by ₹${(spent[k]-alloc[k]).toLocaleString('en-IN')}`});
+        else if (p > 80)  insights.push({type:'warning', msg:`🔶 <b>${catNames[k]}</b> at ${p.toFixed(0)}% — near limit!`});
+        else if (p < 50 && spent[k] > 0) insights.push({type:'success', msg:`✅ <b>${catNames[k]}</b> well managed — ${p.toFixed(0)}% used`});
+    });
+    if (totalSaved === 0)    insights.push({type:'info',    msg:'💡 No savings this month. Start with ₹500!'});
+    if (savingsPct >= 20)    insights.push({type:'success', msg:`🌟 Excellent! Saved ${savingsPct}% — above 20% target!`});
+    if (spent.BUFFER === 0)  insights.push({type:'info',    msg:'🛡️ Buffer unused — moves to Emergency Fund at month end!'});
+
+    document.getElementById('insights').innerHTML = insights.length
+        ? insights.map(i => `<div class="insight-card insight-${i.type}">${i.msg}</div>`).join('')
+        : '<p class="text-success text-center">✅ All good! Finances on track.</p>';
+
+    // ── Savings Summary ──
+    try {
+        const r = await fetch(`http://localhost:8085/api/goals/user/${userId}`);
+        if (r.ok) {
+            const goals = await r.json();
+            const totalTarget    = goals.reduce((a,g) => a + g.targetAmount, 0);
+            const totalGoalSaved = goals.reduce((a,g) => a + g.savedAmount,  0);
+            document.getElementById('savingsSummary').innerHTML = `
+                <div class="text-center mb-3">
+                    <div style="font-size:13px;color:#6c757d">Monthly savings</div>
+                    <div style="font-size:24px;font-weight:800;color:#11998e">₹${totalSaved.toLocaleString('en-IN')}</div>
+                    <div style="font-size:12px;color:#6c757d">${savingsPct}% of income</div>
+                </div>
+                <hr>
+                <div class="fw-semibold mb-2" style="font-size:13px">Goals Progress</div>
+                ${goals.length > 0
+                    ? goals.map(g => {
+                        const p = Math.min((g.savedAmount / g.targetAmount) * 100, 100).toFixed(0);
+                        return `
+                        <div class="mb-3">
+                            <div class="d-flex justify-content-between" style="font-size:13px">
+                                <span>${g.goalName}</span>
+                                <span style="color:#667eea">${p}%</span>
+                            </div>
+                            <div class="progress mt-1">
+                                <div class="progress-bar bg-success" style="width:${p}%"></div>
+                            </div>
+                            <div style="font-size:11px;color:#aaa">
+                                ₹${g.savedAmount.toLocaleString('en-IN')} / ₹${g.targetAmount.toLocaleString('en-IN')}
+                            </div>
+                        </div>`;
+                    }).join('')
+                    : '<p class="text-muted text-center" style="font-size:13px">No goals yet! <a href="goals.html">Add one</a></p>'
+                }
+                <hr>
+                <div class="d-flex justify-content-between" style="font-size:13px">
+                    <span class="fw-semibold">Total goal progress</span>
+                    <span style="color:#667eea">₹${totalGoalSaved.toLocaleString('en-IN')} / ₹${totalTarget.toLocaleString('en-IN')}</span>
+                </div>`;
+        }
+    } catch(e) {}
+}
+
+// ── Render expense list ────────────────────────────────────────
+function renderExpenses(expenses) {
+    document.getElementById('expCount').textContent = expenses.length;
+    if (!expenses.length) {
+        document.getElementById('expenseList').innerHTML = '<p class="text-muted text-center">No expenses this month!</p>';
+        return;
+    }
+    document.getElementById('expenseList').innerHTML = [...expenses].reverse().map(e => `
+        <div class="exp-row">
+            <div class="cat-icon" style="background:${catColors[e.categoryType]}20;color:${catColors[e.categoryType]}">
+                ${catIcons[e.categoryType] || '💸'}
+            </div>
+            <div class="flex-grow-1">
+                <div style="font-size:14px;font-weight:600">${e.description}</div>
+                <div style="font-size:12px;color:#aaa">${e.expenseDate}</div>
+            </div>
+            <div style="font-weight:700;color:#f5576c;min-width:80px;text-align:right">
+                -₹${e.amount.toLocaleString('en-IN')}
+            </div>
+        </div>`).join('');
+}
+
+function filterExpenses(cat, btn) {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderExpenses(cat === 'ALL' ? allExpenses : allExpenses.filter(e => e.categoryType === cat));
+}
+
+init();
+// ── PDF EXPORT ──────────────────────────────────────────
+async function exportPDF() {
+    const { jsPDF } = window.jspdf;
+    const doc = new jsPDF('p', 'mm', 'a4');
+
+    const monthName = monthNames[selMonth];
+    const pageW     = doc.internal.pageSize.getWidth();
+
+    // ── Helper: colors ──
+    const purple = [102, 126, 234];
+    const dark   = [30,  30,  60];
+    const gray   = [100, 100, 120];
+    const light  = [245, 245, 250];
+
+    // ── HEADER BANNER ──
+    doc.setFillColor(...purple);
+    doc.rect(0, 0, pageW, 40, 'F');
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(20);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Smart BudgetWise Tracker', pageW / 2, 15, { align: 'center' });
+
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.text(`Financial Report — ${monthName} ${selYear}`, pageW / 2, 25, { align: 'center' });
+
+    doc.setFontSize(9);
+    doc.text(`Generated on ${new Date().toLocaleDateString('en-IN', {weekday:'long',year:'numeric',month:'long',day:'numeric'})}`, pageW / 2, 33, { align: 'center' });
+
+    // ── Fetch fresh data ──
+    let summary = { totalIncome:0, totalSpent:0, balance:0, savings:0,
+                    categorySpent:{MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0} };
+    try {
+        const r = await fetch(`http://localhost:8085/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
+        if (r.ok) summary = await r.json();
+    } catch(e) {}
+
+    const totalIncome = summary.totalIncome || 0;
+    const totalSpent  = summary.totalSpent  || 0;
+    const balance     = summary.balance     || 0;
+    const savings     = summary.categorySpent?.SAVINGS || 0;
+    const spent       = summary.categorySpent || {};
+    const savingsPct  = totalIncome > 0 ? ((savings / totalIncome) * 100).toFixed(1) : 0;
+
+    const alloc = {
+        MONTHLY: totalIncome * (budgetPlan.monthlyExpensePct || 40) / 100,
+        WEEKLY:  totalIncome * (budgetPlan.weeklyExpensePct  || 30) / 100,
+        WANTS:   totalIncome * (budgetPlan.wantsPct           || 10) / 100,
+        SAVINGS: totalIncome * (budgetPlan.savingsPct         || 10) / 100,
+        BUFFER:  totalIncome * (budgetPlan.bufferPct          || 10) / 100
+    };
+
+    // ── SECTION: Summary Cards ──
+    let y = 50;
+    doc.setTextColor(...dark);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Monthly Summary', 15, y);
+    y += 6;
+
+    doc.setFillColor(...light);
+    doc.roundedRect(12, y, pageW - 24, 36, 3, 3, 'F');
+
+    const cards = [
+        { label: 'Total Income',  value: `Rs.${totalIncome.toLocaleString('en-IN')}`,  color: [17,153,142]  },
+        { label: 'Total Spent',   value: `Rs.${totalSpent.toLocaleString('en-IN')}`,   color: [245,87,108]  },
+        { label: 'Saved',         value: `Rs.${savings.toLocaleString('en-IN')}`,       color: [79,172,254]  },
+        { label: 'Balance Left',  value: `Rs.${Math.max(balance,0).toLocaleString('en-IN')}`, color: [247,151,30] }
+    ];
+
+    const cardW = (pageW - 24) / 4;
+    cards.forEach((card, i) => {
+        const cx = 12 + i * cardW + cardW / 2;
+        doc.setTextColor(...card.color);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(card.label, cx, y + 11, { align: 'center' });
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.text(card.value, cx, y + 22, { align: 'center' });
+        // Savings % under saved amount
+        if (i === 2) {
+            doc.setFontSize(8);
+            doc.setFont('helvetica', 'normal');
+            doc.text(`${savingsPct}% of income`, cx, y + 29, { align: 'center' });
+        }
+    });
+    y += 44;
+
+    // ── SECTION: Budget vs Spent ──
+    doc.setTextColor(...dark);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Budget vs Actual Spending', 15, y);
+    y += 4;
+
+    const catLabels  = ['Monthly Expenses','Weekly Expenses','Wants & Lifestyle','Savings & Investment','Buffer'];
+    const catKeys    = ['MONTHLY','WEEKLY','WANTS','SAVINGS','BUFFER'];
+    const catColors2 = [
+        [245, 87, 108],
+        [255, 210, 0],
+        [79, 172, 254],
+        [56, 239, 125],
+        [161, 140, 209]
+    ];
+
+    const budgetRows = catKeys.map((k, i) => {
+        const spentAmt = spent[k] || 0;
+        const allocAmt = alloc[k] || 0;
+        const pct      = allocAmt > 0 ? ((spentAmt / allocAmt) * 100).toFixed(0) : 0;
+        const status   = spentAmt > allocAmt ? 'OVER BUDGET' : pct > 80 ? 'Near Limit' : 'On Track';
+        return [
+            catLabels[i],
+            `Rs.${allocAmt.toLocaleString('en-IN')}`,
+            `Rs.${spentAmt.toLocaleString('en-IN')}`,
+            `Rs.${Math.max(allocAmt - spentAmt, 0).toLocaleString('en-IN')}`,
+            `${pct}%`,
+            status
+        ];
+    });
+
+    doc.autoTable({
+        startY: y + 2,
+        head: [['Category', 'Allocated', 'Spent', 'Remaining', 'Used %', 'Status']],
+        body: budgetRows,
+        styles: {
+            fontSize: 9,
+            cellPadding: 4,
+            halign: 'center'
+        },
+        headStyles: {
+            fillColor: purple,
+            textColor: [255,255,255],
+            fontStyle: 'bold',
+            halign: 'center'
+        },
+        columnStyles: {
+            0: { halign: 'left', cellWidth: 48 },
+            5: { fontStyle: 'bold' }
+        },
+        didBodyCell: (data) => {
+            if (data.column.index === 5) {
+                if (data.cell.raw === 'OVER BUDGET') {
+                    data.cell.styles.textColor = [220, 53, 69];
+                } else if (data.cell.raw === 'Near Limit') {
+                    data.cell.styles.textColor = [255, 150, 0];
+                } else {
+                    data.cell.styles.textColor = [25, 135, 84];
+                }
+            }
+        },
+        alternateRowStyles: { fillColor: [248, 249, 255] },
+        margin: { left: 12, right: 12 }
+    });
+
+    y = doc.lastAutoTable.finalY + 10;
+
+    // ── SECTION: Expense List ──
+    doc.setTextColor(...dark);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Expense Transactions', 15, y);
+    y += 4;
+
+    let expenses = [];
+    try {
+        const r = await fetch(`http://localhost:8085/api/expenses/user/${userId}/${selYear}/${selMonth}`);
+        if (r.ok) expenses = await r.json();
+    } catch(e) {}
+
+    if (expenses.length > 0) {
+        const expRows = [...expenses].reverse().map(e => [
+            e.description,
+            e.categoryType,
+            e.expenseDate,
+            `Rs.${e.amount.toLocaleString('en-IN')}`
+        ]);
+
+        doc.autoTable({
+            startY: y + 2,
+            head: [['Description', 'Category', 'Date', 'Amount']],
+            body: expRows,
+            styles: { fontSize: 9, cellPadding: 4 },
+            headStyles: {
+                fillColor: [118, 75, 162],
+                textColor: [255,255,255],
+                fontStyle: 'bold'
+            },
+            columnStyles: {
+                0: { cellWidth: 70 },
+                3: { halign: 'right', fontStyle: 'bold', textColor: [220, 53, 69] }
+            },
+            alternateRowStyles: { fillColor: [248, 249, 255] },
+            margin: { left: 12, right: 12 }
+        });
+
+        y = doc.lastAutoTable.finalY + 10;
+    } else {
+        doc.setFontSize(10);
+        doc.setTextColor(...gray);
+        doc.text('No expenses recorded this month.', 15, y + 8);
+        y += 16;
+    }
+
+    // ── SECTION: Goals ──
+    let goals = [];
+    try {
+        const r = await fetch(`http://localhost:8085/api/goals/user/${userId}`);
+        if (r.ok) goals = await r.json();
+    } catch(e) {}
+
+    if (goals.length > 0) {
+        // New page if needed
+        if (y > 220) { doc.addPage(); y = 20; }
+
+        doc.setTextColor(...dark);
+        doc.setFontSize(13);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Savings Goals Progress', 15, y);
+        y += 4;
+
+        const goalRows = goals.map(g => {
+            const pct = Math.min((g.savedAmount / g.targetAmount) * 100, 100).toFixed(1);
+            return [
+                g.goalName,
+                `Rs.${g.targetAmount.toLocaleString('en-IN')}`,
+                `Rs.${g.savedAmount.toLocaleString('en-IN')}`,
+                `Rs.${(g.targetAmount - g.savedAmount).toLocaleString('en-IN')}`,
+                `${pct}%`,
+                g.deadline || '-'
+            ];
+        });
+
+        doc.autoTable({
+            startY: y + 2,
+            head: [['Goal Name', 'Target', 'Saved', 'Remaining', 'Progress', 'Deadline']],
+            body: goalRows,
+            styles: { fontSize: 9, cellPadding: 4 },
+            headStyles: {
+                fillColor: [17, 153, 142],
+                textColor: [255,255,255],
+                fontStyle: 'bold'
+            },
+            columnStyles: {
+                4: { halign: 'center', fontStyle: 'bold', textColor: [17, 153, 142] }
+            },
+            alternateRowStyles: { fillColor: [240, 253, 244] },
+            margin: { left: 12, right: 12 }
+        });
+
+        y = doc.lastAutoTable.finalY + 10;
+    }
+
+    // ── SECTION: Smart Insights ──
+    if (y > 240) { doc.addPage(); y = 20; }
+
+    doc.setTextColor(...dark);
+    doc.setFontSize(13);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Smart Financial Insights', 15, y);
+    y += 8;
+
+    const insights = [];
+    catKeys.forEach(k => {
+        const p = alloc[k] > 0 ? ((spent[k]||0) / alloc[k]) * 100 : 0;
+        if      (p > 100) insights.push({ type:'danger',  msg:`${catLabels[catKeys.indexOf(k)]} overspent by Rs.${((spent[k]||0) - alloc[k]).toLocaleString('en-IN')}` });
+        else if (p > 80)  insights.push({ type:'warning', msg:`${catLabels[catKeys.indexOf(k)]} at ${p.toFixed(0)}% — near limit` });
+        else if (p < 50 && (spent[k]||0) > 0) insights.push({ type:'success', msg:`${catLabels[catKeys.indexOf(k)]} well managed — only ${p.toFixed(0)}% used` });
+    });
+    if (savings === 0)               insights.push({ type:'info',    msg:'No savings recorded this month. Start with small amounts!' });
+    if (savingsPct >= 20)            insights.push({ type:'success', msg:`Excellent! Saved ${savingsPct}% of income — above 20% target!` });
+    if ((spent.BUFFER || 0) === 0)   insights.push({ type:'info',    msg:'Buffer unused — will transfer to Emergency Fund at month end!' });
+    if (balance > 0)                 insights.push({ type:'success', msg:`Rs.${balance.toLocaleString('en-IN')} balance remaining — consider adding to savings!` });
+
+    insights.forEach(ins => {
+        const bgColor = ins.type === 'danger'  ? [255, 245, 245]
+                       : ins.type === 'warning' ? [255, 251, 240]
+                       : ins.type === 'success' ? [240, 253, 244]
+                       :                          [240, 248, 255];
+        const txColor = ins.type === 'danger'  ? [220, 53, 69]
+                       : ins.type === 'warning' ? [200, 130, 0]
+                       : ins.type === 'success' ? [25, 135, 84]
+                       :                          [13, 110, 253];
+        const icon    = ins.type === 'danger' ? '⚠ ' : ins.type === 'warning' ? '🔶 ' : ins.type === 'success' ? '✓ ' : '● ';
+
+        doc.setFillColor(...bgColor);
+        doc.roundedRect(12, y, pageW - 24, 10, 2, 2, 'F');
+        doc.setTextColor(...txColor);
+        doc.setFontSize(9);
+        doc.setFont('helvetica', 'normal');
+        doc.text(icon + ins.msg, 17, y + 6.5);
+        y += 13;
+    });
+
+    // ── FOOTER ──
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+        doc.setPage(i);
+        doc.setFillColor(...purple);
+        doc.rect(0, 287, pageW, 10, 'F');
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(8);
+        doc.setFont('helvetica', 'normal');
+        doc.text('Smart BudgetWise Tracker — Developed by Rajapraba T · B.Tech IT · AAMEC', pageW / 2, 293, { align: 'center' });
+        doc.text(`Page ${i} of ${pageCount}`, pageW - 15, 293, { align: 'right' });
+    }
+
+    // ── SAVE ──
+    doc.save(`BudgetReport_${monthName}_${selYear}.pdf`);
+}
+</script>
+<!-- ═══════════════════════════════════════
+     FOOTER
+═══════════════════════════════════════ -->
+<footer style="background:linear-gradient(135deg,#667eea,#764ba2);color:white;margin-top:40px;padding:30px 0 20px">
+    <div class="container-fluid px-4">
+        <div class="row g-4 mb-3">
+
+            <!-- Brand -->
+            <div class="col-md-4">
+                <div style="font-size:20px;font-weight:800;margin-bottom:8px">
+                    <i class="fas fa-wallet me-2"></i>Smart BudgetWise Tracker
+                </div>
+                <p style="opacity:0.8;font-size:13px;line-height:1.6">
+                    Plan your money. Avoid debt. Achieve your goals.<br>
+                    A complete personal finance management system.
+                </p>
+            </div>
+
+            <!-- Quick Links -->
+            <div class="col-md-4">
+                <div style="font-weight:700;margin-bottom:12px;font-size:14px">Quick Links</div>
+                <div class="d-flex flex-wrap gap-2">
+                    <a href="dashboard.html" style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Dashboard</a>
+                    <a href="expenses.html"  style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Expenses</a>
+                    <a href="reports.html"   style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Reports</a>
+                    <a href="history.html"   style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">History</a>
+                    <a href="budget.html"    style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Budget</a>
+                    <a href="goals.html"     style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Goals</a>
+                    <a href="bills.html"     style="color:rgba(255,255,255,0.8);text-decoration:none;font-size:13px;padding:4px 10px;background:rgba(255,255,255,0.1);border-radius:8px">Bills</a>
+                </div>
+            </div>
+
+            <!-- Budget Rules -->
+            <div class="col-md-4">
+                <div style="font-weight:700;margin-bottom:12px;font-size:14px">Smart Budget Rule</div>
+                <div style="font-size:13px;opacity:0.85;line-height:2">
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">🏠 Monthly 40%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">🛒 Weekly 30%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">❤️ Wants 10%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px;margin-right:6px">💰 Savings 10%</span>
+                    <span style="background:rgba(255,255,255,0.2);padding:3px 10px;border-radius:20px">🛡️ Buffer 10%</span>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Divider -->
+        <div style="border-top:1px solid rgba(255,255,255,0.2);margin:15px 0"></div>
+
+        <!-- Copyright Row -->
+        <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div style="font-size:13px;opacity:0.8">
+                © <span id="footerYear"></span> Smart BudgetWise Tracker. All rights reserved.
+            </div>
+            <div style="font-size:13px;opacity:0.8">
+                Developed by <strong>Rajapraba T</strong> · B.Tech IT · AAMEC
+            </div>
+            <div style="font-size:12px;opacity:0.7">
+                Built with Java Spring Boot · MySQL · Bootstrap
+            </div>
+        </div>
+
+    </div>
+</footer>
+
+<script>
+    document.getElementById('footerYear').textContent = new Date().getFullYear();
+</script>
+</body>
+</html>
