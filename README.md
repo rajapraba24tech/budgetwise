@@ -1,6 +1,6 @@
 # Smart BudgetWise Tracker
 
-A full-stack personal budget tracker built with Spring Boot, MySQL, and JavaScript.
+A full-stack personal budget tracker built with Java, Spring Boot, MySQL, and JavaScript.
 
 🔗 **Live Demo:** [https://budgetwise-production-e921.up.railway.app/login.html](https://budgetwise-production-e921.up.railway.app/login.html)
 
@@ -11,7 +11,7 @@ A full-stack personal budget tracker built with Spring Boot, MySQL, and JavaScri
 - PDF export
 
 ## Tech Stack
-- Backend: Spring Boot, Spring Data JPA
+- Backend: Java, Spring Boot, Spring Data JPA
 - Database: MySQL
 - Frontend: HTML, CSS, Bootstrap, JavaScript, Chart.js
 - Deployed on: Railway
