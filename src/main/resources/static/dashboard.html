@@ -401,7 +401,7 @@ let budgetPlan = {
 // ═══════════════════════════════════════
 async function loadMonthSelector() {
     try {
-        const r = await fetch(`http://localhost:8085/api/dashboard/months/${userId}`);
+        const r = await fetch(`/api/dashboard/months/${userId}`);
         const months = r.ok ? await r.json() : [];
 
         const currentKey = `${selYear}-${String(selMonth).padStart(2,'0')}`;
@@ -444,7 +444,7 @@ async function loadDashboard() {
 
     // 1. Load budget plan
     try {
-        const r = await fetch(`http://localhost:8085/api/budget/user/${userId}`);
+        const r = await fetch(`/api/budget/user/${userId}`);
         if (r.ok) budgetPlan = await r.json();
     } catch(e) {}
 
@@ -458,7 +458,7 @@ async function loadDashboard() {
         categorySpent:{MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0}
     };
     try {
-        const r = await fetch(`http://localhost:8085/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
+        const r = await fetch(`/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
         if (r.ok) summary = await r.json();
     } catch(e) {}
 
@@ -525,7 +525,7 @@ async function loadDashboard() {
 
     // 7. Recent Expenses
     try {
-        const r = await fetch(`http://localhost:8085/api/expenses/user/${userId}/${selYear}/${selMonth}`);
+        const r = await fetch(`/api/expenses/user/${userId}/${selYear}/${selMonth}`);
         if (r.ok) {
             const expenses = await r.json();
             document.getElementById('expCount').textContent = expenses.length;
@@ -592,7 +592,7 @@ async function loadDashboard() {
 
     // 10. Goals Mini
     try {
-        const r = await fetch(`http://localhost:8085/api/goals/user/${userId}`);
+        const r = await fetch(`/api/goals/user/${userId}`);
         if (r.ok) {
             const goals  = await r.json();
             const gColors= ['#667eea','#11998e','#f5576c','#f7971e','#4facfe'];
@@ -637,7 +637,7 @@ function getIcon(cat) {
 // ═══════════════════════════════════════
 async function loadIncomeList() {
     try {
-        const r = await fetch(`http://localhost:8085/api/income/user/${userId}/${selYear}/${selMonth}`);
+        const r = await fetch(`/api/income/user/${userId}/${selYear}/${selMonth}`);
         if (!r.ok) return;
         const incomes = await r.json();
         document.getElementById('incomeList').innerHTML = incomes.length
@@ -663,7 +663,7 @@ async function addIncome() {
     const amount = document.getElementById('incAmount').value.trim();
     if (!source || !amount) { showIncAlert('Fill source and amount!', 'danger'); return; }
     try {
-        const r = await fetch('http://localhost:8085/api/income/add', {
+        const r = await fetch('/api/income/add', {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({userId:parseInt(userId), source, amount:parseFloat(amount), month:selMonth, year:selYear})
@@ -695,7 +695,7 @@ async function addExpense() {
     const cat    = document.getElementById('expCat').value;
     if (!desc || !amount) { showAdd('Fill all fields!', 'danger'); return; }
     try {
-        const r = await fetch('http://localhost:8085/api/expenses/add', {
+        const r = await fetch('/api/expenses/add', {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({

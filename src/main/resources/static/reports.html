@@ -172,7 +172,7 @@ let selYear     = new Date().getFullYear();
 // ── Init: load month dropdown ──────────────────────────────────
 async function init() {
     try {
-        const r = await fetch(`http://localhost:8085/api/dashboard/months/${userId}`);
+        const r = await fetch(`/api/dashboard/months/${userId}`);
         const months = r.ok ? await r.json() : [];
         const now = `${selYear}-${String(selMonth).padStart(2,'0')}`;
         if (!months.includes(now)) months.unshift(now);
@@ -195,7 +195,7 @@ async function loadReports() {
 
     // Load budget plan
     try {
-        const r = await fetch(`http://localhost:8085/api/budget/user/${userId}`);
+        const r = await fetch(`/api/budget/user/${userId}`);
         if (r.ok) budgetPlan = await r.json();
     } catch(e) {}
 
@@ -205,7 +205,7 @@ async function loadReports() {
         categorySpent:{MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0}
     };
     try {
-        const r = await fetch(`http://localhost:8085/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
+        const r = await fetch(`/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
         if (r.ok) summary = await r.json();
     } catch(e) {}
 
@@ -252,7 +252,7 @@ async function loadReports() {
 
     // ── Load expenses ──
     try {
-        const r = await fetch(`http://localhost:8085/api/expenses/user/${userId}/${selYear}/${selMonth}`);
+        const r = await fetch(`/api/expenses/user/${userId}/${selYear}/${selMonth}`);
         if (r.ok) allExpenses = await r.json();
         else allExpenses = [];
     } catch(e) { allExpenses = []; }
@@ -351,7 +351,7 @@ async function loadReports() {
 
     // ── Savings Summary ──
     try {
-        const r = await fetch(`http://localhost:8085/api/goals/user/${userId}`);
+        const r = await fetch(`/api/goals/user/${userId}`);
         if (r.ok) {
             const goals = await r.json();
             const totalTarget    = goals.reduce((a,g) => a + g.targetAmount, 0);
@@ -455,7 +455,7 @@ async function exportPDF() {
     let summary = { totalIncome:0, totalSpent:0, balance:0, savings:0,
                     categorySpent:{MONTHLY:0,WEEKLY:0,WANTS:0,SAVINGS:0,BUFFER:0} };
     try {
-        const r = await fetch(`http://localhost:8085/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
+        const r = await fetch(`/api/dashboard/summary/${userId}/${selYear}/${selMonth}`);
         if (r.ok) summary = await r.json();
     } catch(e) {}
 
@@ -588,7 +588,7 @@ async function exportPDF() {
 
     let expenses = [];
     try {
-        const r = await fetch(`http://localhost:8085/api/expenses/user/${userId}/${selYear}/${selMonth}`);
+        const r = await fetch(`/api/expenses/user/${userId}/${selYear}/${selMonth}`);
         if (r.ok) expenses = await r.json();
     } catch(e) {}
 
@@ -629,7 +629,7 @@ async function exportPDF() {
     // ── SECTION: Goals ──
     let goals = [];
     try {
-        const r = await fetch(`http://localhost:8085/api/goals/user/${userId}`);
+        const r = await fetch(`/api/goals/user/${userId}`);
         if (r.ok) goals = await r.json();
     } catch(e) {}
 

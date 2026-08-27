@@ -96,7 +96,7 @@ let selMonth=new Date().getMonth()+1, selYear=new Date().getFullYear();
 
 async function init() {
     try {
-        const r=await fetch(`http://localhost:8085/api/dashboard/months/${userId}`);
+        const r=await fetch(`/api/dashboard/months/${userId}`);
         const months=r.ok?await r.json():[];
         const now=`${selYear}-${String(selMonth).padStart(2,'0')}`;
         if(!months.includes(now)) months.unshift(now);
@@ -112,7 +112,7 @@ async function loadExpenses() {
     const val=document.getElementById('monthFilter').value;
     if(val){const[y,m]=val.split('-');selYear=parseInt(y);selMonth=parseInt(m);}
     try {
-        const r=await fetch(`http://localhost:8085/api/expenses/user/${userId}/${selYear}/${selMonth}`);
+        const r=await fetch(`/api/expenses/user/${userId}/${selYear}/${selMonth}`);
         if(r.ok){allExpenses=await r.json();updateStats();applyFilters();}
     } catch(e){}
 }
@@ -174,7 +174,7 @@ function formatDate(d) {
 async function deleteExpense(id) {
     if(!confirm('Delete this expense?')) return;
     try {
-        const r=await fetch(`http://localhost:8085/api/expenses/${id}`,{method:'DELETE'});
+        const r=await fetch(`/api/expenses/${id}`,{method:'DELETE'});
         if(r.ok){allExpenses=allExpenses.filter(e=>e.expenseId!==id);updateStats();applyFilters();}
     } catch(e){}
 }

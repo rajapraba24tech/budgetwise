@@ -170,7 +170,7 @@ function daysUntilDue(dueDay) {
 
 async function loadBills() {
     try {
-        const r = await fetch(`http://localhost:8085/api/bills/user/${userId}`);
+        const r = await fetch(`/api/bills/user/${userId}`);
         if (!r.ok) return;
         const bills = await r.json();
 
@@ -247,7 +247,7 @@ async function addBill() {
     }
 
     try {
-        const r = await fetch('http://localhost:8085/api/bills/add', {
+        const r = await fetch('/api/bills/add', {
             method:'POST',
             headers:{'Content-Type':'application/json'},
             body: JSON.stringify({
@@ -268,7 +268,7 @@ async function addBill() {
 
 async function deleteBill(id) {
     if (!confirm('Delete this bill?')) return;
-    await fetch(`http://localhost:8085/api/bills/${id}`, { method:'DELETE' });
+    await fetch(`/api/bills/${id}`, { method:'DELETE' });
     loadBills();
 }
 

@@ -114,7 +114,7 @@ let availableMonths = [];
 
 async function init() {
     try {
-        const r = await fetch(`http://localhost:8085/api/dashboard/months/${userId}`);
+        const r = await fetch(`/api/dashboard/months/${userId}`);
         availableMonths = r.ok ? await r.json() : [];
     } catch(e) { availableMonths = []; }
 
@@ -145,7 +145,7 @@ async function loadAllSummaries() {
     for (const m of availableMonths) {
         const [y, mo] = m.split('-');
         try {
-            const r = await fetch(`http://localhost:8085/api/dashboard/summary/${userId}/${y}/${parseInt(mo)}`);
+            const r = await fetch(`/api/dashboard/summary/${userId}/${y}/${parseInt(mo)}`);
             if (r.ok) summaries.push(await r.json());
         } catch(e) {}
     }
@@ -243,7 +243,7 @@ async function compareMonths() {
     const [ty, tm] = toVal.split('-');
 
     try {
-        const r = await fetch(`http://localhost:8085/api/dashboard/compare/${userId}?fromMonth=${parseInt(fm)}&fromYear=${fy}&toMonth=${parseInt(tm)}&toYear=${ty}`);
+        const r = await fetch(`/api/dashboard/compare/${userId}?fromMonth=${parseInt(fm)}&fromYear=${fy}&toMonth=${parseInt(tm)}&toYear=${ty}`);
         if (!r.ok) return;
         const data = await r.json();
         renderCompare(data, fromVal, toVal);

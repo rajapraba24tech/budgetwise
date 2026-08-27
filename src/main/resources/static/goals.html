@@ -135,7 +135,7 @@ const goalColors = [
 
 async function loadGoals() {
     try {
-        const res = await fetch(`http://localhost:8085/api/goals/user/${userId}`);
+        const res = await fetch(`/api/goals/user/${userId}`);
         if (!res.ok) return;
         const goals = await res.json();
 
@@ -198,7 +198,7 @@ async function addGoal() {
     }
 
     try {
-        const res = await fetch('http://localhost:8085/api/goals/add', {
+        const res = await fetch('/api/goals/add', {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify({
@@ -235,7 +235,7 @@ async function addMoney() {
     if (!amount) return;
 
     try {
-        await fetch(`http://localhost:8085/api/goals/update/${goalId}?amount=${amount}`, {
+        await fetch(`/api/goals/update/${goalId}?amount=${amount}`, {
             method: 'PUT'
         });
         bootstrap.Modal.getInstance(document.getElementById('addMoneyModal')).hide();
@@ -245,7 +245,7 @@ async function addMoney() {
 
 async function deleteGoal(goalId) {
     if (!confirm('Delete this goal?')) return;
-    await fetch(`http://localhost:8085/api/goals/${goalId}`, { method: 'DELETE' });
+    await fetch(`/api/goals/${goalId}`, { method: 'DELETE' });
     loadGoals();
 }
 

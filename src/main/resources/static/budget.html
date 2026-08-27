@@ -178,7 +178,7 @@ if (!userId) window.location.href = 'login.html';
 // Load existing plan
 async function loadPlan() {
     try {
-        const res = await fetch(`http://localhost:8085/api/budget/user/${userId}`);
+        const res = await fetch(`/api/budget/user/${userId}`);
         if (res.ok) {
             const plan = await res.json();
             document.getElementById('monthly').value = plan.monthlyExpensePct;
@@ -254,7 +254,7 @@ async function saveBudget() {
     };
 
     try {
-        const res = await fetch('http://localhost:8085/api/budget/save', {
+        const res = await fetch('/api/budget/save', {
             method: 'POST',
             headers: {'Content-Type':'application/json'},
             body: JSON.stringify(plan)
